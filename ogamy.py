@@ -81,23 +81,26 @@ class OGamer:
 
     def get_server(self, universe):
         """Fetch server url for a given universe."""
-        print("inside get_server...")
-        # TODO: atually get this from the page
         result = self.session.get("https://{}.ogame.gameforge.com".format(self.country_code))
         soup = BeautifulSoup(result.content, "html.parser")
         found = soup.find("select", {"id": "serverLogin"})
-        for i, server in enumerate(found.find_all("option")):
-            print("child", i, server["value"])
-        print("found:", found)
-        return "s139-en.ogame.gameforge.com"
+
+        servers = {}
+        for sv in found.find_all("option"):
+            servers[sv.string.strip()] = sv["value"]
+
+        # check if server exists
+        if not universe in servers.keys():
+            self.crash(universe, "was not found.")
+
+        return servers[universe]
 
     def get_country(self, code):
         """Get country specific URL."""
         # TODO: search on the page for the code
         return "en"
 
-    def crash(self, message, error="OGameError", exit=True):
-        """Logs out and exits program."""
-        if self.logged_in(): self.logout()
-        print("{}:".format(error), message)
+    def crash(self, *args, error="OGameError", exit=True):
+        """Print an error message and exits program."""
+        print("{}:".format("OGameError"), *args)
         if exit: sys.exit()
