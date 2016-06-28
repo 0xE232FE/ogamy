@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 
 import requests
@@ -5,7 +7,7 @@ from bs4 import BeautifulSoup
 
 class OGamer:
 
-    def __init__(self, uni, username, password, country="EN"):
+    def __init__(self, uni, username, password, country="United Kingdom"):
 
         self.session = requests.session()
 
@@ -95,10 +97,28 @@ class OGamer:
 
         return servers[universe]
 
-    def get_country(self, code):
+    def get_country(self, country):
         """Get country specific URL."""
-        # TODO: search on the page for the code
-        return "en"
+        if country == "United Kingdom": return "en"
+
+        result = self.session.get("https://en.ogame.gameforge.com")
+        soup = BeautifulSoup(result.content, "html.parser")
+
+        code_list = soup.find("ul", {"id": "mmoList1"})
+        countries = {}
+        for tag in code_list.find_all("li"):
+            link = tag.find("a")["href"]
+            name = tag.string.strip() # name of the country
+            code = link.split(".")[0].replace("//", "")
+            countries[name] = code # save to the dict
+
+        # check if input was ok
+        if not country in countries.keys():
+            self.crash(country, "was not found on the list.")
+        if len(countries[country]) != 2:
+            self.crash("Can't fetch code for", country)
+
+        return countries[country]
 
     def crash(self, *args, error="OGameError", exit=True):
         """Print an error message and exits program."""
