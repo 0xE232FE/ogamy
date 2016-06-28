@@ -17,6 +17,7 @@ class OGamer:
         self.login()
 
         self.planet_ids  = self.fetch_planet_ids()
+        self.planets = list(sorted(self.planet_ids.keys()))
 
     def login(self):
         """Logs player into account."""
@@ -80,7 +81,14 @@ class OGamer:
 
     def get_server(self, universe):
         """Fetch server url for a given universe."""
+        print("inside get_server...")
         # TODO: atually get this from the page
+        result = self.session.get("https://{}.ogame.gameforge.com".format(self.country_code))
+        soup = BeautifulSoup(result.content, "html.parser")
+        found = soup.find("select", {"id": "serverLogin"})
+        for i, server in enumerate(found.find_all("option")):
+            print("child", i, server["value"])
+        print("found:", found)
         return "s139-en.ogame.gameforge.com"
 
     def get_country(self, code):
