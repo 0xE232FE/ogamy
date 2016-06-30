@@ -20,8 +20,8 @@ class OGamer:
 
         self.login()
 
-        self.planet_ids  = self.fetch_planet_ids()
-        self.planets = list(sorted(self.planet_ids.keys()))
+        # setup planet codes needed for url building later
+        self.planet_ids = self.fetch_planet_ids()
 
     def login(self):
         """Logs player into account."""
@@ -86,15 +86,48 @@ class OGamer:
 
         return techs
 
-    def get_soup(self, page, planet=None):
-        """Make BeautifulSoup object for this specific page."""
+    def build_mine(self, mine, planet=None):
+        """Upgrade, if possible, the specified mine or solar plant."""
+        token = self.get_token("resources", planet)
+        code = codes.mines[mine]
+        form = {"token": token,
+                "type": code,
+                "modus": "1"}
+        url = self.page_url("resources", planet)
+        self.session.post(url, data=form)
+
+    def build_storage(self, mine, planet=None):
+        """Upgrade if possible, the storage for a type of mine."""
+        token = self.get_token("resources", planet)
+        code = codes.storage[mine]
+        form = {"token": token,
+                "type": code,
+                "modus": "1"}
+        url = self.page_url("resources", planet)
+        self.session.post(url, data=form)
+
+    def get_token(self, page, planet=None):
+        """Search for the token for the POST form."""
+        soup = self.get_soup("resources", planet)
+        post = soup.find("form", {"method": "POST"})
+
+        token = post.find("input", {"name": "token"})["value"]
+        return token
+
+    def page_url(self, page, planet=None):
+        """Build correct URL for a given page/planet."""
         url = "https://{}/game/index.php?page={}".format(self.server, page)
-        if not planet is None:
-            if isinstance(planet, int):
+        if not planet is None: # to go to a specific planet
+            if isinstance(planet, int): # using the planet code
                 url += "&cp={}".format(planet)
-            elif isinstance(planet, str):
+            elif isinstance(planet, str): # using planet name instead
                 url += "&cp={}".format(self.planet_ids[planet])
 
+        return url
+
+    def get_soup(self, page, planet=None):
+        """Make BeautifulSoup object for this specific page."""
+        url = self.page_url(page, planet)
         result = self.session.get(url)
         soup = BeautifulSoup(result.content, "html.parser")
         return soup
