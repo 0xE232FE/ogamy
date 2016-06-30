@@ -5,6 +5,8 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 
+import codes
+
 class OGamer:
 
     def __init__(self, uni, username, password, country="United Kingdom"):
@@ -42,7 +44,7 @@ class OGamer:
         if found is None: return False
         if str(found["content"]) == self.username: return True
 
-    def get_resources(self, planet=None):
+    def fetch_resources(self, planet=None):
         """Build a dictonary of resources."""
         soup = self.get_soup("overview", planet=planet)
 
@@ -67,6 +69,22 @@ class OGamer:
             planets[name.string] = planet_id
 
         return planets
+
+    def fetch_technologies(self):
+        """Get technology levels, using the same keys from codes dict."""
+        soup = self.get_soup("research")
+        rev_techs = {v: k for k, v in codes.techs.items()}
+        techs = {}
+
+        found = soup.find_all("a", {"class": "detail_button"})
+
+        for tech in found:
+            code = int(tech["ref"])
+            level_text = tech.find("span", {"class": "level"}).text.strip()
+            level = int(level_text.split()[-1])
+            techs[rev_techs[code]] = level
+
+        return techs
 
     def get_soup(self, page, planet=None):
         """Make BeautifulSoup object for this specific page."""
