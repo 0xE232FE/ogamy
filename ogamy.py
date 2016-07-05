@@ -86,6 +86,20 @@ class OGamer:
 
         return techs
 
+    def fetch_mines(self, planet=None):
+        """Search watch the levels of the mines are on the planet."""
+        soup = self.get_soup("resources", planet=planet)
+
+        levels = []
+        mines = soup.find_all("span", {"class": "ecke"})
+        for mine in mines[0:4]:
+            text = mine.find("span", {"class": "level"})
+            level = int(text.text.split()[-1])
+            levels.append(level)
+
+        return dict(zip(["metal", "crystal", "deuterium", "solar"],
+                    levels))
+
     def build_mine(self, mine, planet=None):
         """Upgrade, if possible, the specified mine or solar plant."""
         token = self.get_token("resources", planet)
