@@ -89,9 +89,8 @@ class OGamer:
     def build_mine(self, mine, planet=None):
         """Upgrade, if possible, the specified mine or solar plant."""
         token = self.get_token("resources", planet)
-        code = codes.mines[mine]
         form = {"token": token,
-                "type": code,
+                "type": codes.mines[mine],
                 "modus": "1"}
         url = self.page_url("resources", planet)
         self.session.post(url, data=form)
@@ -99,16 +98,42 @@ class OGamer:
     def build_storage(self, mine, planet=None):
         """Upgrade if possible, the storage for a type of mine."""
         token = self.get_token("resources", planet)
-        code = codes.storage[mine]
         form = {"token": token,
-                "type": code,
+                "type": codes.storage[mine],
                 "modus": "1"}
         url = self.page_url("resources", planet)
         self.session.post(url, data=form)
 
+    def build_station(self, building, planet=None):
+        """Upgrade building if possible."""
+        token = self.get_token("station", planet)
+        form = {"token": token,
+                "type": codes.buildings[building],
+                "modus": "1"}
+        url = self.page_url("station", planet)
+        self.session.post(url, data=form)
+
+    def build_research(self, tech, planet=None):
+        """Start upgrading research. Defaults to main planet."""
+        form = {"type": codes.techs[tech],
+                "modus": "1"}
+        url = self.page_url("research", planet)
+        self.session.post(url, data=form)
+
+    def build_ship(self, ship, number=1, planet=None):
+        """Build a given number of a given ship on a given planet."""
+        token = self.get_token("shipyard", planet)
+        menge = "" if number == 1 else str(number)
+        form = {"token": token,
+                "type": codes.ships[ship],
+                "modus": "1",
+                "menge": menge}
+        url = self.page_url("shipyard", planet)
+        self.session.post(url, data=form)
+
     def get_token(self, page, planet=None):
         """Search for the token for the POST form."""
-        soup = self.get_soup("resources", planet)
+        soup = self.get_soup(page, planet)
         post = soup.find("form", {"method": "POST"})
 
         token = post.find("input", {"name": "token"})["value"]
