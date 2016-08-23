@@ -58,6 +58,8 @@ class OGamer:
 
     def fetch_planet_ids(self):
         """Builds a dict with the names of the planets and their ids."""
+        # TODO: big planet names dont work.
+        # TODO: need to fetch from other part of the page
         soup = self.get_soup("overview")
 
         planets = {}
@@ -69,6 +71,33 @@ class OGamer:
             planets[name.string] = planet_id
 
         return planets
+
+    def fetch_mines(self, planet=None):
+        """Search watch the levels of the mines are on the planet."""
+        soup = self.get_soup("resources", planet=planet)
+
+        levels = []
+        mines = soup.find_all("span", {"class": "ecke"})
+        for mine in mines[0:5]:
+            text = mine.find("span", {"class": "level"})
+            level = int(text.text.split()[-1])
+            levels.append(level)
+
+        return dict(zip(["metal", "crystal", "deuterium", "solar", "fusion"],
+                    levels))
+
+    def fetch_storage(self, planet=None):
+        """Search the levels of the storage for resources."""
+        soup = self.get_soup("resources", planet=planet)
+
+        levels = []
+        storage = soup.find_all("span", {"class": "ecke"})
+        for res in storage[6:9]:
+            text = res.find("span", {"class": "level"})
+            level = int(text.text.split()[-1])
+            levels.append(level)
+
+        return dict(zip(["metal", "crystal", "deuterium"], levels))
 
     def fetch_technologies(self):
         """Get technology levels, using the same keys from codes dict."""
@@ -85,20 +114,6 @@ class OGamer:
             techs[rev_techs[code]] = level
 
         return techs
-
-    def fetch_mines(self, planet=None):
-        """Search watch the levels of the mines are on the planet."""
-        soup = self.get_soup("resources", planet=planet)
-
-        levels = []
-        mines = soup.find_all("span", {"class": "ecke"})
-        for mine in mines[0:4]:
-            text = mine.find("span", {"class": "level"})
-            level = int(text.text.split()[-1])
-            levels.append(level)
-
-        return dict(zip(["metal", "crystal", "deuterium", "solar"],
-                    levels))
 
     def build_mine(self, mine, planet=None):
         """Upgrade, if possible, the specified mine or solar plant."""
@@ -144,6 +159,15 @@ class OGamer:
                 "menge": menge}
         url = self.page_url("shipyard", planet)
         self.session.post(url, data=form)
+
+    def rename(self, name, planet=None):
+        """Rename a planet."""
+        # TODO: make this work
+        url = self.page_url("planetRename", planet=planet)
+        form = {"newPlanetName": "+".join(name.split())}
+        self.session.post(url, data=form)
+
+        self.planet_ids = self.fetch_planet_ids() # needs updating
 
     def get_token(self, page, planet=None):
         """Search for the token for the POST form."""
@@ -212,5 +236,5 @@ class OGamer:
 
     def crash(self, *args, error="OGameError", exit=True):
         """Print an error message and exits program."""
-        print("{}:".format("OGameError"), *args)
+        print("{}:".format(error), *args)
         if exit: sys.exit()
