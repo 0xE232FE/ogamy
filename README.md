@@ -1,6 +1,6 @@
-## ogamy
+# ogamy
 Wrapper for OGame made with Python
 
-# Dependencies
+## Dependencies
 - requests
 - beautifulsoup4
