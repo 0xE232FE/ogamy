@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+from collections import OrderedDict
 
 import requests
 from bs4 import BeautifulSoup
@@ -62,15 +63,15 @@ class OGamer:
         # TODO: need to fetch from other part of the page
         soup = self.get_soup("overview")
 
-        planets = {}
+        planet_list = [] # for creating the planet dict afterwards
         name_tags = soup.find_all("span", {"class": "planet-name"})
         for name in name_tags:
             id_tag = name.parent.parent
             planet_id = int(str(id_tag["id"]).replace("planet-", ""))
+            
+            planet_list.append((name.string, planet_id))
 
-            planets[name.string] = planet_id
-
-        return planets
+        return OrderedDict(planet_list)
 
     def fetch_mines(self, planet=None):
         """Search watch the levels of the mines are on the planet."""
