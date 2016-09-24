@@ -49,13 +49,13 @@ class OGamer:
         """Build a dictonary of resources."""
         soup = self.get_soup("overview", planet=planet)
 
-        resources = {}
+        resources = [] # list of key/value pairs for ordered dict
         for res in ["metal", "crystal", "deuterium", "energy"]:
             found = soup.find("span", {"id": "resources_{}".format(res)})
             value = int(found.string.strip().replace(".", ""))
-            resources[res] = value
+            resources.append((res, value))
 
-        return resources
+        return OrderedDict(resources)
 
     def fetch_planet_ids(self):
         """Builds a dict with the names of the planets and their ids."""
@@ -84,7 +84,7 @@ class OGamer:
             level = int(text.text.split()[-1])
             levels.append(level)
 
-        return dict(zip(["metal", "crystal", "deuterium", "solar", "fusion"],
+        return OrderedDict(zip(["metal", "crystal", "deuterium", "solar", "fusion"],
                     levels))
 
     def fetch_storage(self, planet=None):
@@ -98,13 +98,13 @@ class OGamer:
             level = int(text.text.split()[-1])
             levels.append(level)
 
-        return dict(zip(["metal", "crystal", "deuterium"], levels))
+        return OrderedDict(zip(["metal", "crystal", "deuterium"], levels))
 
     def fetch_technologies(self):
         """Get technology levels, using the same keys from codes dict."""
         soup = self.get_soup("research")
         rev_techs = {v: k for k, v in codes.techs.items()}
-        techs = {}
+        techs = [] # key/value tuples for creating ordered dict
 
         found = soup.find_all("a", {"class": "detail_button"})
 
@@ -112,9 +112,9 @@ class OGamer:
             code = int(tech["ref"])
             level_text = tech.find("span", {"class": "level"}).text.strip()
             level = int(level_text.split()[-1])
-            techs[rev_techs[code]] = level
+            techs.append((rev_techs[code], level))
 
-        return techs
+        return OrderedDict(techs)
 
     def build_mine(self, mine, planet=None):
         """Upgrade, if possible, the specified mine or solar plant."""
