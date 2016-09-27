@@ -99,6 +99,18 @@ class OGamer:
             levels.append(level)
 
         return OrderedDict(zip(["metal", "crystal", "deuterium"], levels))
+  
+    def fetch_buildings(self, planet=None):
+        """Get the level for each of the stations in buildings page."""
+        soup = self.get_soup("station", planet=planet)
+
+        levels = []
+        for building in soup.find_all("span", {"class": "level"}):
+            lvl = (building.text.split()[-1])
+            levels.append(lvl)
+
+        return OrderedDict(zip(["robot", "shipyard", "lab", "depot", "silo", "nanite",
+                                "terraformer", "dock"], levels))
 
     def fetch_technologies(self):
         """Get technology levels, using the same keys from codes dict."""
