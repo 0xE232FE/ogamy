@@ -73,8 +73,24 @@ class OGamer:
 
         return OrderedDict(planet_list)
 
+    def fetch_planet_info(self, planet=None):
+        """Get information for a specific planet like tempurature, position and fields."""
+        soup = self.get_soup("overview", planet=planet)
+ 
+        # grab planet id from the built dictionary 
+        if planet is None: planet_id = self.planet_ids[next(iter(self.planet_ids))] # first value of dict
+        else: planet_id = self.planet_ids[planet]
+
+        planet = soup.find("div", {"id": "planet-{}".format(planet_id)})
+        info = planet.find("a")["title"]
+        info = [x.split(">")[-1] for x in info.split("<")] # separate text from the tags
+        info = [x for x in info if x != ""] # remove empty strings
+
+        return OrderedDict(zip(["position", "diameter", "slots", "temperature"],
+                   [info[0].split()[-1], info[1].split()[0], info[1].split()[-1], info[2]]))
+
     def fetch_mines(self, planet=None):
-        """Search watch the levels of the mines are on the planet."""
+        """Search what the levels of the mines are on the planet."""
         soup = self.get_soup("resources", planet=planet)
 
         levels = []
@@ -251,3 +267,4 @@ class OGamer:
         """Print an error message and exits program."""
         print("{}:".format(error), *args)
         if exit: sys.exit()
+
