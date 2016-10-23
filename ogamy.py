@@ -45,6 +45,22 @@ class OGamer:
         if found is None: return False
         if str(found["content"]) == self.username: return True
 
+    def fetch_points(self):
+        """Get point and general position of player in rankings."""
+        soup = self.get_soup("highscore")
+
+        # find correct line in rankings table
+        line = soup.find("tr", {"class": "myrank"})
+
+        rank = int(line.find("td", {"class": "position"}).contents[0].strip())
+        points = int(line.find("td", {"class": "score"}).contents[0].strip().replace(".", ""))
+
+        return OrderedDict([("ranking", rank), ("points", points)])
+
+    def fetch_build_queue(self, planet=None):
+        """Get the building, technology and ship/defence queue."""
+        print("Not implemented yet!")
+
     def fetch_resources(self, planet=None):
         """Build a dictonary of resources."""
         soup = self.get_soup("overview", planet=planet)
@@ -68,7 +84,7 @@ class OGamer:
         for name in name_tags:
             id_tag = name.parent.parent
             planet_id = int(str(id_tag["id"]).replace("planet-", ""))
-            
+
             planet_list.append((name.string, planet_id))
 
         return OrderedDict(planet_list)
@@ -76,8 +92,8 @@ class OGamer:
     def fetch_planet_info(self, planet=None):
         """Get information for a specific planet like tempurature, position and fields."""
         soup = self.get_soup("overview", planet=planet)
- 
-        # grab planet id from the built dictionary 
+
+        # grab planet id from the built dictionary
         if planet is None: planet_id = self.planet_ids[next(iter(self.planet_ids))] # first value of dict
         else: planet_id = self.planet_ids[planet]
 
@@ -115,7 +131,7 @@ class OGamer:
             levels.append(level)
 
         return OrderedDict(zip(["metal", "crystal", "deuterium"], levels))
-  
+
     def fetch_buildings(self, planet=None):
         """Get the level for each of the stations in buildings page."""
         soup = self.get_soup("station", planet=planet)
