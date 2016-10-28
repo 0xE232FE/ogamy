@@ -38,9 +38,12 @@ class OGamer:
         url = "https://%s/game/index.php?page=logout" % self.server
         self.session.get(url)
 
-    def logged_in(self):
+    def logged_in(self, use_page=None):
         """Check if player is logged in."""
-        soup = self.get_soup("overview")
+        # allow page soup to be passed as argument to make get_soup calling this function faster
+        if use_page is None: soup = self.get_soup("overview")
+        else: soup = use_page
+
         found = soup.find("meta", {"name": "ogame-player-name"})
         if found is None: return False
         if str(found["content"]) == self.username: return True
@@ -238,6 +241,14 @@ class OGamer:
         url = self.page_url(page, planet)
         result = self.session.get(url)
         soup = BeautifulSoup(result.content, "html.parser")
+
+        if not self.logged_in(use_page=soup):
+            self.login()
+            # i could do this recursively but i'm afraid of getting stuck because it couldn't
+            # log in for some reason not related to this program. and this is prob faster
+            result = self.session.get(url)
+            soup = BeautifulSoup(result.content, "html.parser")
+
         return soup
 
     def get_server(self, universe):
