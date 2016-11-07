@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 from collections import OrderedDict
@@ -47,6 +47,8 @@ class OGamer:
         found = soup.find("meta", {"name": "ogame-player-name"})
         if found is None: return False
         if str(found["content"]) == self.username: return True
+
+    ########### fetch functions ##############
 
     def fetch_points(self):
         """Get point and general position of player in rankings."""
@@ -110,102 +112,76 @@ class OGamer:
 
     def fetch_mines(self, planet=None):
         """Search what the levels of the mines are on the planet."""
-        soup = self.get_soup("resources", planet=planet)
-
-        levels = []
-        mines = soup.find_all("span", {"class": "ecke"})
-        for mine in mines[0:5]:
-            text = mine.find("span", {"class": "level"})
-            level = int(text.text.split()[-1])
-            levels.append(level)
-
-        return OrderedDict(zip(["metal", "crystal", "deuterium", "solar", "fusion"],
-                    levels))
+        return self.fetch_levels("resources", planet, codes.mines)
 
     def fetch_storage(self, planet=None):
         """Search the levels of the storage for resources."""
-        soup = self.get_soup("resources", planet=planet)
-
-        levels = []
-        storage = soup.find_all("span", {"class": "ecke"})
-        for res in storage[6:9]:
-            text = res.find("span", {"class": "level"})
-            level = int(text.text.split()[-1])
-            levels.append(level)
-
-        return OrderedDict(zip(["metal", "crystal", "deuterium"], levels))
+        return self.fetch_levels("resources", planet, codes.storage)
 
     def fetch_buildings(self, planet=None):
         """Get the level for each of the stations in buildings page."""
-        soup = self.get_soup("station", planet=planet)
-
-        levels = []
-        for building in soup.find_all("span", {"class": "level"}):
-            lvl = (building.text.split()[-1])
-            levels.append(lvl)
-
-        return OrderedDict(zip(["robot", "shipyard", "lab", "depot", "silo", "nanite",
-                                "terraformer", "dock"], levels))
+        return self.fetch_levels("station", planet, codes.buildings)
 
     def fetch_technologies(self):
         """Get technology levels, using the same keys from codes dict."""
-        soup = self.get_soup("research")
-        rev_techs = {v: k for k, v in codes.techs.items()}
-        techs = [] # key/value tuples for creating ordered dict
+        return self.fetch_levels("research", None, codes.techs)
 
-        found = soup.find_all("a", {"class": "detail_button"})
+    def fetch_ships(self, planet=None):
+        """Get the number of each ship docked at a given planet."""
+        return self.fetch_levels("shipyard", planet, codes.ships)
 
-        for tech in found:
-            code = int(tech["ref"])
-            level_text = tech.find("span", {"class": "level"}).text.strip()
+    def fetch_defenses(self, planet=None):
+        return self.fetch_levels("defense", planet, codes.defences)
+
+    def fetch_levels(self, page, planet, code_dict):
+        """Generic function to get the level of something on a page."""
+        soup = self.get_soup(page)
+        rev_codes = {v: k for k, v in code_dict.items()} # reverse the dict
+        dict_items = [] # for creating OrderedDict at the end
+
+        found = soup.find_all("a") # get all the a tags of the page
+        for thing in found:
+            try: code = int(thing["ref"])
+            except KeyError: continue # we only care about the ones with a level
+            if code not in rev_codes: continue # discard other levels that might be on the page
+
+            level_text = thing.find("span", {"class": "level"}).text.strip()
             level = int(level_text.split()[-1])
-            techs.append((rev_techs[code], level))
+            dict_items.append((rev_codes[code], level))
 
-        return OrderedDict(techs)
+        return OrderedDict(dict_items)
+
+    ########### build functions ##############
 
     def build_mine(self, mine, planet=None):
         """Upgrade, if possible, the specified mine or solar plant."""
-        token = self.get_token("resources", planet)
-        form = {"token": token,
-                "type": codes.mines[mine],
-                "modus": "1"}
-        url = self.page_url("resources", planet)
-        self.session.post(url, data=form)
+        self.send_build_post("resources", planet, codes.mines[mine])
 
     def build_storage(self, mine, planet=None):
         """Upgrade if possible, the storage for a type of mine."""
-        token = self.get_token("resources", planet)
-        form = {"token": token,
-                "type": codes.storage[mine],
-                "modus": "1"}
-        url = self.page_url("resources", planet)
-        self.session.post(url, data=form)
+        self.send_build_post("resources", planet, codes.storage[mine])
 
     def build_station(self, building, planet=None):
         """Upgrade building if possible."""
-        token = self.get_token("station", planet)
-        form = {"token": token,
-                "type": codes.buildings[building],
-                "modus": "1"}
-        url = self.page_url("station", planet)
-        self.session.post(url, data=form)
+        self.send_build_post("station", planet, codes.buildings[building])
 
     def build_research(self, tech, planet=None):
         """Start upgrading research. Defaults to main planet."""
-        form = {"type": codes.techs[tech],
-                "modus": "1"}
-        url = self.page_url("research", planet)
-        self.session.post(url, data=form)
+        self.send_build_post("research", planet, codes.techs[tech], get_token=False)
 
-    def build_ship(self, ship, number=1, planet=None):
+    def build_ships(self, ship, number=1, planet=None):
         """Build a given number of a given ship on a given planet."""
-        token = self.get_token("shipyard", planet)
         menge = "" if number == 1 else str(number)
-        form = {"token": token,
-                "type": codes.ships[ship],
-                "modus": "1",
-                "menge": menge}
-        url = self.page_url("shipyard", planet)
+        self.send_build_post("shipyard", planet, codes.ships[ship], form={"menge": menge})
+
+    def send_build_post(self, page, planet, code, form={}, get_token=True):
+        """Grab a token and send a post request to a certain page with the provided form."""
+        # add addional needed info to the form before sending it
+        if get_token: form["token"] = self.get_token(page, planet)
+        form["modus"] = "1" # prob refers if this constructing or destructing
+        form["type"] = code
+
+        url = self.page_url(page, planet)
         self.session.post(url, data=form)
 
     def rename(self, name, planet=None):
