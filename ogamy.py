@@ -142,8 +142,11 @@ class OGamer:
         found = soup.find_all("a") # get all the a tags of the page
         for thing in found:
             try: code = int(thing["ref"])
-            except KeyError: continue # we only care about the ones with a level
+            except KeyError: continue # we only care about the link tags with a level
             if code not in rev_codes: continue # discard other levels that might be on the page
+            try: # need this to not catch some stuff i don't fully understand
+                if "details" not in thing["id"]: continue
+            except KeyError: continue
 
             level_text = thing.find("span", {"class": "level"}).text.strip()
             level = int(level_text.split()[-1])
