@@ -135,7 +135,7 @@ class OGamer:
 
     def fetch_levels(self, page, planet, code_dict):
         """Generic function to get the level of something on a page."""
-        soup = self.get_soup(page)
+        soup = self.get_soup(page, planet)
         rev_codes = {v: k for k, v in code_dict.items()} # reverse the dict
         dict_items = [] # for creating OrderedDict at the end
 
@@ -177,6 +177,29 @@ class OGamer:
         menge = "" if number == 1 else str(number)
         self.send_build_post("shipyard", planet, codes.ships[ship], form={"menge": menge})
 
+    def send_fleet(self, ships, dest, mission, speed=10, planet=None):
+        """not working!!!!!!!!!!!!!"""
+        form = {"holdingtime": "1", # dont know what this is yet
+                "expeditiontime": "1", # also dont know what this is yet
+                "token": self.get_token("fleet3", planet),
+                "galaxy": dest[0], "system": dest[1], "position": dest[2],
+                "type": "1", # also dont know yet
+                "mission": codes.mission[mission],
+                "union2": "0", # dont know this one either
+                "holdingOrExpTime": "0", # nope
+                "speed": str(speed),
+                "acsValues": "-", # no clue
+                "prioMetal": "1", # nope
+                "prioCrystal": "2", # nope
+                "prioDeuterium": "3", # aaaaand nope
+                "am202": "1", # more magic to me
+                "metal": res["metal"],
+                "cystal": res["crystal"],
+                "deuterium": res["deuterium"]}
+
+        url = self.page_url("movement", planet)
+        self.session.post(url, data=form)
+
     def send_build_post(self, page, planet, code, form={}, get_token=True):
         """Grab a token and send a post request to a certain page with the provided form."""
         # add addional needed info to the form before sending it
@@ -185,6 +208,7 @@ class OGamer:
         form["type"] = code
 
         url = self.page_url(page, planet)
+        if not self.logged_in(): self.login()
         self.session.post(url, data=form)
 
     def rename(self, name, planet=None):
