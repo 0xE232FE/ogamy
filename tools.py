@@ -14,15 +14,31 @@ def needed_solar(metal, crystal, deut):
 def build_time(building, level, is_storage=False): pass
 
 def build_cost(building, level, is_storage=False):
-    """not working. need to round stuff and add all the other buildings"""
-    res = {"metal": (60, 15), "crystal": (48, 24), "solar": (75, 30)}
+    """Calculate how much building a certain level costs."""
+    base_cost = {
+        # mines and stuff
+        "metal": (60, 15), "crystal": (48, 24), "solar": (75, 30),
+        "solar": (75, 30), "fusion": (900, 360, 180),
+        # station buildings
+        "robots": (400, 120, 200), "shipyard": (400, 200, 100), "lab": (200, 400, 200),
+        "depot": (20000, 40000), "silo": (20000, 20000, 1000), "nanite": (10**6, 500000, 10**5),
+        "terraformer": (0, 50000, 100000, 1000), "dock": (1000, 0, 250, 125)}
+    base_sto = {"metal": (1000), "crystal": (1000, 500), "deuterium": (1000, 1000)}
+
     def cost(*args):
-        exp = 1.5 if building == "metal" else 1.6
-        return dict(zip(["metal", "crystal", "deut", "solar"], [arg*exp**(level -1) for arg in args]))
-    return cost(*res[building])
+        if building in res.keys():
+            if building == "crystal" and not is_storage: exp = 1.6
+            else: exp = 1.5
+        else: exp = 2
+
+        return dict(zip(["metal", "crystal", "deuterium", "solar", "dm"],
+                        [arg * exp ** (level - 1) for arg in args] + [0] * (5 - len(args))))
+
+    if is_storage: return cost(*base_sto[building])
+    else: return cost(*base_cost[building])
 
 def distance(start, dest):
-    """The distance between two planets. Both arguments must 3 tuples."""
+    """The distance between two planets. Both arguments must be 3 tuples of the coordinates"""
     if start[0] != dest[0]: # different galaxies
         return 20000 * abs(start[0] - dest[0])
     elif start[1] != dest[1]: # different solar systems
