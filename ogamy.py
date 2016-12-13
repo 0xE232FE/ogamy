@@ -177,8 +177,8 @@ class OGamer:
         menge = "" if number == 1 else str(number)
         self.send_build_post("shipyard", planet, codes.ships[ship], form={"menge": menge})
 
-    def send_fleet(self, ships, dest, mission, speed=10, planet=None):
-        """not working!!!!!!!!!!!!!"""
+    def send_fleet(self, ships, res, dest, mission, speed=10, planet=None):
+        """only works for one specific type of mission."""
         form = {"holdingtime": "1", # dont know what this is yet
                 "expeditiontime": "1", # also dont know what this is yet
                 "token": self.get_token("fleet3", planet),
@@ -187,16 +187,17 @@ class OGamer:
                 "mission": codes.mission[mission],
                 "union2": "0", # dont know this one either
                 "holdingOrExpTime": "0", # nope
-                "speed": str(speed),
+                "speed": str(speed), # this one was easy
                 "acsValues": "-", # no clue
                 "prioMetal": "1", # nope
                 "prioCrystal": "2", # nope
-                "prioDeuterium": "3", # aaaaand nope
-                "am202": "1", # more magic to me
-                "metal": res["metal"],
-                "cystal": res["crystal"],
-                "deuterium": res["deuterium"]}
+                "prioDeuterium": "3"} # aaaaand nope
+        # now we add the ships
+        for ship in ships: form["am{}".format(codes.ships[ship]] = ships[ship]
+        # next we add the resources to take
+        for r in res: form[r] = res[r]
 
+        # now that the fleet cake is done we just give to the server
         url = self.page_url("movement", planet)
         self.session.post(url, data=form)
 
