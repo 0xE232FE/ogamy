@@ -6,7 +6,7 @@ from collections import OrderedDict
 import requests
 from bs4 import BeautifulSoup
 
-import codes
+from . import codes
 
 class OGamer:
 
@@ -267,7 +267,7 @@ class OGamer:
 
         # check if server exists
         if not universe in servers.keys():
-            self.crash(universe, "was not found.")
+            self.crash("Universe", universe, "was not found.")
 
         return servers[universe]
 
@@ -288,9 +288,9 @@ class OGamer:
 
         # check if input was ok
         if not country in countries.keys():
-            self.crash(country, "was not found on the list.")
+            self.crash("Country", country, "was not found on the list.")
         if len(countries[country]) != 2:
-            self.crash("Can't fetch code for", country)
+            self.crash("Can't fetch code for country", country)
 
         return countries[country]
 
