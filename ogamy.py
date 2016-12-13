@@ -193,7 +193,7 @@ class OGamer:
                 "prioCrystal": "2", # nope
                 "prioDeuterium": "3"} # aaaaand nope
         # now we add the ships
-        for ship in ships: form["am{}".format(codes.ships[ship]] = ships[ship]
+        for ship in ships: form["am{}".format(codes.ships[ship])] = ships[ship]
         # next we add the resources to take
         for r in res: form[r] = res[r]
 
