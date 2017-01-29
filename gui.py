@@ -266,16 +266,20 @@ class Viewer:
             elif key == curses.KEY_RIGHT: self.move_cursor(1, 0) # right
 
 
-def main(stdscr):
+def init_curses(stdscr, game):
     curses.curs_set(0) # make cursor invisible
     # set color pairs
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE) # black text on white
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK) # red text on black
-
-    # load ogame profile
-    game = OGamer(*tuple(sys.argv[1:]))
-
+    
     viewer = Viewer(game, stdscr)
     viewer.run()
 
-if __name__ == "__main__": curses.wrapper(main)
+def main():
+    pw = getpass.getpass(prompt='Password: ', stream=None)
+
+    # load ogame profile
+    game = OGamer(sys.argv[1], sys.argv[2], pw)
+    curses.wrapper(init_curses, game)
+
+if __name__ == "__main__": main()
