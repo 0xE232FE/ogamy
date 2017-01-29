@@ -10,3 +10,4 @@ Wrapper for OGame made with Python
 - write something to rename planets
 - be able to see fleets
 - functions for construction time and build cost (in tools.py)
+- fleet journey time calculator (also in tools.py)

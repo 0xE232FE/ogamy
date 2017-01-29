@@ -6,7 +6,7 @@ from collections import OrderedDict
 import requests
 from bs4 import BeautifulSoup
 
-from . import codes
+import codes
 
 class OGamer:
 
