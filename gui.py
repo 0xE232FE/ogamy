@@ -165,7 +165,10 @@ class Viewer:
         self.draw_station_info([["combat", ship_list[0:9]],
                                 ["civil", ship_list[9:]]])
 
-    def draw_defenses(self): pass
+    def draw_defenses(self):
+        defense = self.grab_cache("defenses")
+        self.draw_station_info([["", list(defense.items())]])
+
     def draw_fleet(self): pass
 
     def draw_middle(self):
