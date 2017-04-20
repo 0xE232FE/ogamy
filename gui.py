@@ -2,6 +2,7 @@
 import sys
 import math
 import time
+import getpass
 import curses
 from collections import OrderedDict
 
@@ -271,7 +272,7 @@ def init_curses(stdscr, game):
     # set color pairs
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE) # black text on white
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK) # red text on black
-    
+
     viewer = Viewer(game, stdscr)
     viewer.run()
 
