@@ -283,7 +283,9 @@ def main():
     pw = getpass.getpass(prompt='Password: ', stream=None)
 
     # load ogame profile
-    game = OGamer(sys.argv[1], sys.argv[2], pw)
+    if len(sys.argv) == 4: country = sys.argv[3]
+    else: country = "United Kingdom"
+    game = OGamer(sys.argv[1], sys.argv[2], pw, country=country)
     curses.wrapper(init_curses, game)
 
 if __name__ == "__main__": main()

@@ -12,6 +12,9 @@ base_cost = {
     "terraformer": (0, 50000, 100000, 1000), "dock": (1000, 0, 250, 125)
 }
 
+def can_build(res, cost):
+    return all(res[key] >= value for key, value in cost.items() if value > 0)
+
 def needed_solar(metal, crystal, deut):
     metal_ene = ((10 * metal * 1.1**metal) // 1) + 1 # metal consumption
     crystal_ene = ((10 * crystal * 1.1**crystal) // 1) + 1 # crystal consumption
@@ -35,16 +38,19 @@ def build_time(building, level, storage=False, redesigned=True, robots=0, nanite
 def build_cost(building, level, is_storage=False):
     """Calculate how much building a certain level costs."""
     def cost(*args):
-        if building in ["metal", "crystal", "deuterium", "solar", "dm"]:
+        if building in ["metal", "crystal", "deuterium", "solar", "fusion"]:
             if building == "crystal": exp = 1.6
             else: exp = 1.5
         else: exp = 2
 
-        return dict(zip(["metal", "crystal", "deuterium", "solar", "dm"],
+        return dict(zip(["metal", "crystal", "deuterium", "solar"],
                         [arg * exp ** (level - 1) for arg in args] + [0] * (5 - len(args))))
 
     if is_storage: building += "_sto"
     return cost(*base_cost[building])
+
+def research_time(research, level):
+    pass
 
 def distance(start, dest):
     """The distance between two planets. Both arguments must be 3 tuples of the coordinates"""
