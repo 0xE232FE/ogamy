@@ -16,13 +16,14 @@ def can_build(res, cost):
     return all(res[key] >= value for key, value in cost.items() if value > 0)
 
 def needed_solar(metal, crystal, deut):
+    """Needed solar to power mines."""
     metal_ene = ((10 * metal * 1.1**metal) // 1) + 1 # metal consumption
     crystal_ene = ((10 * crystal * 1.1**crystal) // 1) + 1 # crystal consumption
     deut_ene = ((20 * deut * 1.1**deut) // 1) + 1 # deut consumption
     total_ene = metal_ene + crystal_ene + deut_ene
 
     solar_lvl = 1
-    while (20 * solar_lvl * 1.1**solar_lvl) // 1 < total_ene: solar_lvl += 1
+    while int(20 * solar_lvl * 1.1**solar_lvl) < total_ene: solar_lvl += 1
 
     return solar_lvl
 
