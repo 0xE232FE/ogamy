@@ -7,7 +7,7 @@ base_cost = {
     "solar": (75, 30), "fusion": (900, 360, 180),
     "metal_sto": (1000), "crystal_sto": (1000, 500), "deuterium_sto": (1000, 1000),
     # station buildings
-    "robots": (400, 120, 200), "shipyard": (400, 200, 100), "lab": (200, 400, 200),
+    "robot": (400, 120, 200), "shipyard": (400, 200, 100), "lab": (200, 400, 200),
     "depot": (20000, 40000), "silo": (20000, 20000, 1000), "nanite": (10**6, 500000, 10**5),
     "terraformer": (0, 50000, 100000, 1000), "dock": (1000, 0, 250, 125),
     # technologies
@@ -15,7 +15,8 @@ base_cost = {
     "hyperspace": (0, 4000, 2000), "plasma": (2000, 4000, 1000),
     "combustion": (400, 0, 600), "impulse": (2000, 4000, 600), "hyperdrive": (10000, 20000, 6000),
     "espionage": (200, 1000, 200), "computer": (0, 400, 600), "astro": (4000, 8000, 4000),
-    "intergalactic": (240000, 400000, 160000), "graviton": (0, 0, 0, 300000)
+    "intergalactic": (240000, 400000, 160000), "graviton": (0, 0, 0, 300000),
+    "weapons": (800, 200), "shield": (200, 600), "armour": (1000,)
     # ships
 
     # defenses
@@ -53,7 +54,7 @@ def cost(building, level, is_storage=False):
         elif building == "astro": exp = 1.75
         else: exp = 2
 
-        return dict(zip(["metal", "crystal", "deuterium", "solar"],
+        return dict(zip(["metal", "crystal", "deuterium", "energy"],
                         [arg * exp ** (level - 1) for arg in args] + [0] * (5 - len(args))))
 
     if is_storage: building += "_sto"
