@@ -39,8 +39,8 @@ def needed_solar(metal, crystal, deut):
 
 def build_time(building, level, storage=False, redesigned=True, robots=0, nanites=0, uni_speed=1):
     """Time (in seconds) it takes to build something."""
-    cost = build_cost(building, level, is_storage=storage)
-    res = cost["metal"] + cost["crystal"]
+    _cost = cost(building, level, is_storage=storage)
+    res = _cost["metal"] + _cost["crystal"]
     time = res / (2500 * (1 + robots) * (2 ** nanites) * uni_speed)
     if redesigned: time *= 2 / 7
 
@@ -48,7 +48,7 @@ def build_time(building, level, storage=False, redesigned=True, robots=0, nanite
 
 def cost(building, level, is_storage=False):
     """Calculate how much building/researching a certain level costs."""
-    def cost(*args):
+    def _cost(*args):
         if building in ["metal", "deuterium", "solar", "fusion"]: exp = 1.5
         elif building == "crystal": exp = 1.6
         elif building == "astro": exp = 1.75
@@ -58,7 +58,7 @@ def cost(building, level, is_storage=False):
                         [arg * exp ** (level - 1) for arg in args] + [0] * (5 - len(args))))
 
     if is_storage: building += "_sto"
-    return cost(*base_cost[building])
+    return _cost(*base_cost[building])
 
 def research_time(tech, level, lab=0):
     """Time to research a tech. If you have 'intergalactic research network'
