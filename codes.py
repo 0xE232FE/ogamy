@@ -75,7 +75,7 @@ defences = {"rocket": 401,
             "intermissile": 503}
 
 # codes for each type of fleet mission
-misions = {"expedition": 15,
+missions = {"expedition": 15,
            "colonisation": 7,
            "recycle": 8,
            "transport": 3,

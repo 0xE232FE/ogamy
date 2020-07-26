@@ -42,6 +42,11 @@ class Viewer:
             self.cache[grab] = fetched # save in cache
             return fetched
 
+    def dot_number(self, n):
+        s = str(n)[::-1]
+        chunks = [s[i:i + 3] for i in range(0, len(s), 3)]
+        return ".".join(chunks)[::-1]
+
     def draw_header(self):
         """The header contains the planets name and resources."""
         # created padded string with name on the middle and add to screen
@@ -64,8 +69,10 @@ class Viewer:
 
         # calculate number of spaces between resource, for prettiness
         maxx = self.screen.getmaxyx()[1] # horizontal size of screen
-        spaces = maxx - (sum(map(lambda t: len(t[0]) + 2 + len(str(t[1])), res.items())))
-        spaces //= len(res.keys()) - 1
+        spaces = maxx - sum(len(mine) + len(self.dot_number(res))
+            for mine, res in res.items())
+        #spaces = maxx - (sum(map(lambda t: len(t[0]) + 2 + len(str(t[1])), res.items())))
+        spaces /= len(res.keys()) - 1
 
         x = 0
         for mine, stored in res.items():
@@ -75,7 +82,7 @@ class Viewer:
             if mine != "energy" and stored >= storage[mine]: pair_num = 2 # red text on black
             elif mine == "energy" and res["energy"] < 0: pair_num = 2
             else: pair_num = 0 # normal white text on black
-            self.screen.addstr(1, x, str(stored), curses.color_pair(pair_num))
+            self.screen.addstr(1, x, self.dot_number(stored), curses.color_pair(pair_num))
 
             x += len(str(stored)) + spaces # move forward and add spaces
 
@@ -84,7 +91,7 @@ class Viewer:
         maxy, maxx = self.screen.getmaxyx()
 
         # get the info from the game object
-        info = tuple(self.game.fetch_points().values())
+        info = tuple(map(self.dot_number, self.game.fetch_points().values()))
         info_str = "Points: {} | Rank: {}".format(info[1], info[0])
 
         # calculate starting x for centering
@@ -280,6 +287,11 @@ def init_curses(stdscr, game):
     viewer.run()
 
 def main():
+    # check if the needed arguments were supplied
+    if len(sys.argv) < 3:
+        print("usage: python gui.py <uni> <username> [coutry]")
+        return
+
     pw = getpass.getpass(prompt='Password: ', stream=None)
 
     # load ogame profile

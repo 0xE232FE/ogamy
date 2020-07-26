@@ -36,6 +36,7 @@ class OGamer:
     def logout(self):
         """Logs out of account."""
         url = "https://%s/game/index.php?page=logout" % self.server
+        #"https://s103-pt.ogame.gameforge.com/game/index.php?page=logout"
         self.session.get(url)
 
     def logged_in(self, use_page=None):
@@ -179,12 +180,40 @@ class OGamer:
 
     def send_fleet(self, ships, res, dest, mission, speed=10, planet=None):
         """only works for one specific type of mission."""
+        """it seems we need to send a post to fleet3 with some info (acs, ships, speed, dest, type, union and mission)
+            and then the needed token will be in the response of that post.
+            then just send the form like we already have below to the movement page with everything.
+        """
+        # get fleet1: needs planet=planet
+        # post fleet2: just the hidden fields (from fleet1) and ships
+        # post fleet3: hidden field but overwrite speed, coords and type
+        # post movement: hidden fields and resources and mission
+        fleet1 = self.get_soup("fleet1", planet=planet)
+
+        form = {
+            "galaxy": dest[0], "system": dest[1], "position": dest[2],
+            "type": "1", # planet/debris/moon
+            "mission": codes.missions[mission],
+            "speed": str(speed) # this one was easy
+        }
+        # now we add the ships
+        for ship in ships: form["am{}".format(codes.ships[ship])] = ships[ship]
+
+        # second page
+        fleet2 = self.session.post(self.page_url("fleet2", planet=planet), data=form).content
+
+        # third page
+        fleet3 = self.session.post(self.page_url("fleet3", planet=planet), data=form).content
+        form.update({
+            "acsValues": "-", # no clue
+        })
+        # maybe i need to do 3 separate requests for each of the pages
         form = {"holdingtime": "1", # dont know what this is yet
                 "expeditiontime": "1", # also dont know what this is yet
-                "token": self.get_token("fleet3", planet),
+                "token": self.get_token("fleet3", in_post=False, planet=planet),
                 "galaxy": dest[0], "system": dest[1], "position": dest[2],
-                "type": "1", # also dont know yet
-                "mission": codes.mission[mission],
+                "type": "1", # planet/debris/moon
+                "mission": codes.missions[mission],
                 "union2": "0", # dont know this one either
                 "holdingOrExpTime": "0", # nope
                 "speed": str(speed), # this one was easy
@@ -201,16 +230,18 @@ class OGamer:
         url = self.page_url("movement", planet)
         self.session.post(url, data=form)
 
-    def send_build_post(self, page, planet, code, form={}, get_token=True):
+    def send_build_post(self, page, planet, code, form={}, get_token=True, build=True):
         """Grab a token and send a post request to a certain page with the provided form."""
         # add addional needed info to the form before sending it
         if get_token: form["token"] = self.get_token(page, planet)
-        form["modus"] = "1" # prob refers if this constructing or destructing
+        if build: form["modus"] = "1" # prob refers if this constructing or destructing
         form["type"] = code
 
         url = self.page_url(page, planet)
         if not self.logged_in(): self.login()
-        self.session.post(url, data=form)
+        res = self.session.post(url, data=form)
+
+        return res.content
 
     def rename(self, name, planet=None):
         """Rename a planet."""
@@ -221,13 +252,21 @@ class OGamer:
 
         self.planet_ids = self.fetch_planet_ids() # needs updating
 
-    def get_token(self, page, planet=None):
+    def get_token(self, page, in_post=True, planet=None):
         """Search for the token for the POST form."""
         soup = self.get_soup(page, planet)
-        post = soup.find("form", {"method": "POST"})
+        with open("log", "w") as f: print(soup, file=f)
+        if in_post: soup = soup.find("form", {"method": "POST"})
+        #print("\n\n\n\n\npost:", post)
 
-        token = post.find("input", {"name": "token"})["value"]
+        token = soup.find("input", {"name": "token"})["value"]
+        print("\n\n\n\n\n\ntoken:", token)
         return token
+
+    def get_hidden(self, soup):
+        """Retrive all the hidden fields from soup as a dictionary."""
+        hidden = soup.find_all("input", {"type": "hidden"})
+        return {field["name"]: field["value"] for field in hidden}
 
     def page_url(self, page, planet=None):
         """Build correct URL for a given page/planet."""
@@ -256,6 +295,7 @@ class OGamer:
         return soup
 
     def get_server(self, universe):
+        if universe == "Capella": return "s103"
         """Fetch server url for a given universe."""
         result = self.session.get("https://{}.ogame.gameforge.com".format(self.country_code))
         soup = BeautifulSoup(result.content, "html.parser")
@@ -274,6 +314,7 @@ class OGamer:
     def get_country(self, country):
         """Get country specific URL."""
         if country == "United Kingdom": return "en"
+        if country == "Portugal": return "pt"
 
         result = self.session.get("https://en.ogame.gameforge.com")
         soup = BeautifulSoup(result.content, "html.parser")
